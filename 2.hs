@@ -2,7 +2,7 @@
 
 import Text.Parsec
 
-data Entry = Entry { min :: Int, max :: Int, letter :: Char, password :: String } deriving Show
+data Entry = Entry { min :: Int, max :: Int, letter :: Char, password :: String }
 
 entries =
   many $ Entry <$>
