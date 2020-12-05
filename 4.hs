@@ -1,4 +1,6 @@
 import Data.Map (Map, fromList, member, (!))
+import Data.Ix (inRange)
+import Data.Maybe
 import Data.Char
 import Text.Read
 import Text.Parsec
@@ -10,13 +12,7 @@ key = manyTill letter $ char ':'
 value = manyTill anyChar end
 end = newline <|> space
 
-valid1 passport = member "byr" passport &&
-                  member "iyr" passport &&
-                  member "eyr" passport &&
-                  member "hgt" passport &&
-                  member "hcl" passport &&
-                  member "ecl" passport &&
-                  member "pid" passport
+valid1 passport = all (`member` passport) ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]
 
 valid2 passport = valid1 passport &&
                   byr (passport ! "byr") &&
@@ -27,37 +23,20 @@ valid2 passport = valid1 passport &&
                   ecl (passport ! "ecl") &&
                   pid (passport ! "pid")
 
-byr xs = 
-  case readMaybe xs of
-    Just n  -> n >= 1920 && n <= 2002
-    Nothing -> False
+byr xs = maybe False (inRange (1920, 2002)) $ readMaybe xs
 
-iyr xs = 
-  case readMaybe xs of
-    Just n  -> n >= 2010 && n <= 2020
-    Nothing -> False
+iyr xs = maybe False (inRange (2010, 2020)) $ readMaybe xs
 
-eyr xs = 
-  case readMaybe xs of
-    Just n  -> n >= 2020 && n <= 2030
-    Nothing -> False
+eyr xs = maybe False (inRange (2020, 2030)) $ readMaybe xs
 
 hgt xs =
-  case height of
-    Just h    -> case units of
-                   "cm"      -> h >= 150 && h <= 193
-                   "in"      -> h >= 59 && h <= 76
-                   otherwise -> False
+  case listToMaybe $ reads xs of
+    Just (h, "cm") -> inRange (150, 193) h
+    Just (h, "in") -> inRange (59, 76) h
     otherwise -> False
-  where
-    (value, units) = splitAt (length xs - 2) xs
-    height = readMaybe value
 
-hcl ('#':hex) =
-  case length hex of
-    6         -> all isHexDigit hex
-    otherwise -> False
-hcl _ = False
+hcl ('#':hex) = length hex == 6 && all isHexDigit hex
+hcl _         = False
 
 ecl xs = elem xs ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"]
 
