@@ -1,17 +1,17 @@
 import Data.List
+import Numeric (readInt)
 
-partition [] (i, j) = i
-partition (x:xs) (i, j)
-  | x `elem` ['F', 'L'] = partition xs (i, k)
-  | x `elem` ['B', 'R'] = partition xs (k + 1, j)
-  where k = (i + j) `div` 2
+toBinary 'F' = 0
+toBinary 'L' = 0
+toBinary 'B' = 1
+toBinary 'R' = 1
 
 findSeat (lo:hi:xs)
   | hi - lo == 2 = lo + 1
-  | otherwise = findSeat (hi:xs)
+  | otherwise    = findSeat (hi:xs)
   
 main = do
   lines <- lines <$> getContents
-  let ids = map (\(row, col) -> (partition row (0, 127)) * 8 + (binary col (0, 7))) $ map (splitAt 7) lines
+  let ids = map (fst . head . readInt 2 (`elem` "FLBR") toBinary) lines
   print $ maximum ids
   print . findSeat $ sort ids
