@@ -2,4 +2,4 @@
 
 set -eux
 
-stack runghc "$1.hs" < "$1.txt"
+stack runghc "src/$1.hs" < "input/$1.txt"
