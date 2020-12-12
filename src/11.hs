@@ -1,15 +1,49 @@
-import qualified Data.Array as Array
+import Data.Maybe
+import Data.Array
+import Data.Ix
 
-occupied (i,j) xss =
-  adjacent
+directions = [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]
+
+simulate xss update =
+  if xss == next then
+    length $ filter (== '#') (elems xss)
+  else
+    simulate next update
   where
-    adjacent = [(i + x, j + y) | x <- [-1, 0, 1], y <- [-1, 0, 1], (x /= 0) || (y /= 0)]
+    next = listArray (bounds xss) . map (update xss) $ range (bounds xss)
+
+part1 xss pos@(x,y) =
+  case xss ! pos of
+    'L' | occ == 0  -> '#'
+    '#' | occ >= 4  -> 'L'
+    x               -> x
+  where
+    occ = occupied xss adj
+    adj = filter (inRange $ bounds xss) $ map (\(dx,dy) -> (x+dx,y+dy)) directions
+
+part2 adj xss pos =
+  case xss ! pos of
+    'L' | occ == 0  -> '#'
+    '#' | occ >= 5  -> 'L'
+    x               -> x
+  where
+    occ = occupied xss $ adj ! pos
+
+occupied xss adj = length . filter (== '#') $ map (xss !) adj
+
+visibility xss = listArray (bounds xss) . map visible $ range (bounds xss)
+  where visible pos = catMaybes $ map (nearest xss pos) directions
+
+nearest xss (x,y) dir@(dx,dy)
+  | inRange (bounds xss) pos =
+    case xss ! pos of
+      'L' -> Just pos
+      _   -> nearest xss pos dir
+  | otherwise = Nothing
+  where
+    pos = (x+dx,y+dy)
 
 main = do
-  input <- lines <$> getContents
-  let indexed = zip [0..] $ map (zip [0..]) input
-  let width = length $ head input
-  let height = length $ input
-  let a = Array.array ((0,0),(height-1,width-1)) [((i,j), seat) | (i, row) <- indexed, (j, seat) <- row]
-  print $ occupied (10,10) a
-  -- print $ a !? (100,100)
+  input <- listArray((0,0), (98,91)) . filter (/= '\n') <$> getContents
+  print $ simulate input part1
+  print $ simulate input (part2 $ visibility input)
